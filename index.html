@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>in which case i would run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE   quiet, vulnerable, translucent
+IDEA    a near-white printed sheet with a glass bowl on it; words rise one by one and break on the glass
+PICTURE one hairline circle, nothing else
+COLOUR  neutral near-white paper, graphite ink
+TYPE    Inter Tight 300; LAYOUT circle centred, alone
+*/
+:root{color-scheme:light;--bg:#fcfcfb;--ink:#121212;--D:min(54vmin,470px)}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Inter Tight",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+::selection{background:transparent}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:20;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .2 0 0 0 0 .2 0 0 0 0 .2 0 0 0 .7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");opacity:.08;mix-blend-mode:multiply}
+
+.sheet{height:100svh;display:grid;place-items:center}
+#bowl{position:relative;width:var(--D);aspect-ratio:1}
+#bowl svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.glass{stroke:var(--ink);stroke-opacity:.55;stroke-width:.22;fill:url(#g);filter:url(#ink)}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 2.6s cubic-bezier(.6,0,.2,1) .2s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.word{position:absolute;left:50%;top:50%;white-space:pre;line-height:1.2;letter-spacing:.01em;color:rgba(18,18,18,.94);text-shadow:0 0 .6px rgba(18,18,18,.55),0 0 2.5px rgba(18,18,18,.16);will-change:transform,opacity;pointer-events:none}
+.word.aside{font-style:italic;color:rgba(18,18,18,.66)}
+#ink-layer{position:absolute;inset:0;filter:url(#inkText);pointer-events:none}
+.word span{display:inline-block}
+.pulse{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 6px 1px rgba(18,18,18,.07),inset 0 0 10px rgba(18,18,18,.05);pointer-events:none;filter:blur(1px)}
+.still{position:absolute;inset:0;display:grid;place-items:center;text-align:center;transition:opacity 1.4s;line-height:2}
+.still .aside{font-style:italic;opacity:.65}
+
+@media (max-width:600px){:root{--D:min(76vw,60svh)}}
+</style>
+</head>
+<body>
+<main class="sheet">
+  <div id="bowl" role="img" aria-label="in which case i would run / run // run inside an egg shell / the pale is close / it is almost my skin // am i // tap / tap // i am a fish in a glassbowl / (can you hear me) / from my mouth something silver / climbs // big eyes / and bubbles // (swimming)">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <radialGradient id="g" cx="38%" cy="32%" r="75%">
+          <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
+          <stop offset=".7" stop-color="#fff" stop-opacity=".15"/>
+          <stop offset="1" stop-color="#e2e2e2" stop-opacity=".2"/>
+        </radialGradient>
+        <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3" result="t"/>
+          <feDisplacementMap in="SourceGraphic" in2="t" scale=".16" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feGaussianBlur in="d" stdDeviation=".08"/>
+        </filter>
+      </defs>
+      <circle class="glass" cx="50" cy="50" r="49.8" pathLength="1"/>
+    </svg>
+    <div id="ink-layer"></div>
+  </div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="inkText" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="2" seed="7" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation=".38" result="b"/>
+      <feComposite in="b" in2="d" operator="arithmetic" k1="0" k2=".55" k3=".6" k4="0"/>
+    </filter>
+  </svg>
+</main>
+
+<script>
+{
+const POEM = `in which case i would
+run
+
+run inside an egg shell
+the pale is close
+it is almost my skin
+
+am i
+
+tap
+tap
+
+i am a fish in a glassbowl
+(can you hear me)
+from my mouth something silver
+climbs
+
+big eyes
+and bubbles
+
+(swimming)`;
+
+// timeline in slots: words keep their order; a blank line in the poem is a blank interval and a visible gap
+const WORD = 1.05, LINE_END = 0.8, BLANK = 2.4;
+const events = []; let t = 0, li = 0, afterBlank = false;
+const LINES = [];
+for (const raw of POEM.split('\n')) {
+  const line = raw.trim();
+  if (!line) { t += BLANK; afterBlank = true; continue; }
+  const ws = line.split(' ');
+  LINES.push({ ws, aside: line.startsWith('('), afterBlank });
+  ws.forEach((w, k) => {
+    if (k) t += WORD * (0.65 + Math.random() * 0.75);
+    events.push({ t, w, li, k, tap: w === 'tap' });
+  });
+  t += WORD + LINE_END * (0.7 + Math.random() * 0.6);
+  li++; afterBlank = false;
+}
+const END = t;
+
+const bowl = document.getElementById('bowl');
+const layer = document.getElementById('ink-layer');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let R = 240, F = 16;
+const geo = () => { R = bowl.clientWidth / 2; F = Math.max(13, R * 0.074); bowl.style.fontSize = F + 'px'; };
+geo();
+const ro = new ResizeObserver(geo); ro.observe(bowl);
+const wallY = x => { const q = R * R - x * x; return q > 0 ? -Math.sqrt(q) : 0; };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const rowH = () => 1.75 * F / R;   // one line of the poem, in radii
+
+let shake = 0, words = [], clock = 0, start = 1.2, ev = 0, running = true, pace = 1;
+
+function measure(w, aside) {
+  const m = document.createElement('div'); m.className = 'word' + (aside ? ' aside' : ''); m.style.visibility = 'hidden';
+  m.textContent = w; layer.appendChild(m); const v = m.offsetWidth / F; m.remove(); return v;
+}
+
+// lay out a line's horizontal order once: irregular gaps, free start; heights are chained word to word
+let lastW = null, row = null;
+function makeRow(L) {
+  const ws = L.ws.map(w => measure(w, L.aside));
+  let gaps = L.ws.slice(1).map(() => rnd(.55, 2.2));
+  const y0 = lastW ? lastW.y + (L.afterBlank ? 2.6 : rnd(.75, 1.25)) * rowH() : 0.55;
+  const yEnd = y0 + L.ws.length * .55 * F / R;
+  const top = Math.min(.95, Math.max(Math.abs(y0 - .1), Math.abs(yEnd)));
+  const avail = 2 * Math.sqrt(1 - top * top) * R * .86 / F;   // em
+  const sum = a => a.reduce((p, c) => p + c, 0);
+  let total = sum(ws) + sum(gaps);
+  if (total > avail && gaps.length) { const k = Math.max(.2, (avail - sum(ws)) / sum(gaps)); gaps = gaps.map(g => Math.max(.45, g * k)); total = sum(ws) + sum(gaps); }
+  const slack = Math.max(0, avail - total);
+  let x = -total / 2 + rnd(-slack / 2, slack / 2);
+  const xs = ws.map((w, i) => { const c = x + w / 2; x += w + (gaps[i] || 0); return c; });
+  row = { y0, xs };
+}
+
+function spawn(e) {
+  const L = LINES[e.li];
+  if (e.k === 0) makeRow(L);
+  // never higher than the word before it: each word sits a little (and unevenly) lower
+  let y = e.k === 0 ? row.y0 : lastW.y + rnd(.1, .95) * F / R;
+  // always born inside the lower glass: pushing a word lower never breaks the order
+  y = Math.max(y, rnd(.2, .34));
+  if (y > .86) y = Math.max(.86, lastW ? lastW.y + .15 * F / R : .86);
+  const el = document.createElement('div');
+  el.className = 'word' + (L.aside ? ' aside' : '');
+  el.innerHTML = [...e.w].map(c => `<span>${esc(c)}</span>`).join('');
+  el.style.opacity = 0;
+  layer.appendChild(el);
+  const w = el.offsetWidth;
+  const chars = [...el.children].map(s => ({ el: s, hit: false, ox: (s.offsetLeft + s.offsetWidth / 2 - w / 2) / F }));
+  const half = Math.sqrt(Math.max(0, 1 - (y + .08) ** 2)) * R * .9 / F - w / F / 2;   // em of room each side
+  const xem = Math.max(-half, Math.min(half, row.xs[e.k]));
+  const W = { el, chars, w: w / F, xem, y, age: 0, ph: rnd(0, 6.28), done: 0, a: 0, ve: 0, kicks: [] };
+  words.push(W); lastW = W;
+  if (e.tap) pulse();
+}
+
+function pulse() {
+  const p = document.createElement('div'); p.className = 'pulse'; bowl.appendChild(p);
+  p.animate([{ transform: 'scale(.995)', opacity: 0 }, { transform: 'scale(1.004)', opacity: 1, offset: .35 }, { transform: 'scale(1.014)', opacity: 0 }], { duration: 3200, easing: 'ease-in-out' }).onfinish = () => p.remove();
+}
+
+// a letter that touches the glass is left behind where it touched: it softens and spreads in place, never past the wall
+function dissolve(c, W, x, yPx) {
+  c.hit = true;
+  const cw = c.el.offsetWidth;
+  const g = document.createElement('div');
+  g.className = W.el.className + ' gone'; g.textContent = c.el.textContent;
+  g.style.transform = `translate(${x - cw / 2}px,${yPx - F * .6}px)`;
+  layer.appendChild(g);
+  c.el.style.visibility = 'hidden';
+  const dx = rnd(-.18, .18) * F, dy = rnd(.05, .3) * F;   // drifts a touch inward, not up
+  const base = `translate(${x - cw / 2}px,${yPx - F * .6}px)`;
+  g.animate([
+    { opacity: c.el.style.opacity || 1, filter: 'blur(0px)', transform: base + ' scale(1)' },
+    { opacity: .3, filter: 'blur(1.6px)', transform: base + ` translate(${dx * .4}px,${dy * .4}px) scale(1.06)`, offset: .35 },
+    { opacity: 0, filter: 'blur(6px)', transform: base + ` translate(${dx}px,${dy}px) scale(1.12)` }
+  ], { duration: 1700 / (1 + W.ve * 7), easing: 'cubic-bezier(.25,.6,.3,1)', fill: 'forwards' }).onfinish = () => g.remove();
+}
+
+function step(dt) {
+  clock += dt;
+  // the column of text drifts up; it speeds up when new lines would be born too low, slows when too high
+  const want = lastW && ev < events.length ? Math.min(1.45, Math.max(.7, 1 + 2.2 * (lastW.y - .42))) : 1; // gentle while writing, steady after
+  pace += (want - pace) * Math.min(1, dt * .35);
+  shake *= Math.exp(-dt * 3.2);
+  const vel = .32 * rowH() * pace / WORD;
+
+  const local = clock - start;
+  while (ev < events.length && local >= events[ev].t) spawn(events[ev++]);
+  if (ev >= events.length && !words.length && local > END) { ev = 0; lastW = null; start = clock + 2.5; }
+
+
+  for (const W of words) {
+    W.age += dt;
+    // a tap: the glass shivers, then each bubble gets a push that keeps building for a moment and then drags out
+    while (W.kicks.length && W.kicks[0] <= clock) { W.kicks.shift(); W.a = Math.min(6, W.a + 2.1); }
+    W.a *= Math.exp(-dt / .28);
+    W.ve = (W.ve + W.a * dt) * Math.exp(-dt / .85);
+    W.y -= (vel + W.ve) * dt;
+    const fin = Math.min(1, W.age / 2.2), e = 1 - (1 - fin) ** 3;
+    const sway = W.xem * F + Math.sin(clock * .35 + W.ph) * F * (.07 + W.ve * .25) + Math.sin(clock * 11 + W.ph) * shake * .7;
+    const yPx = W.y * R + (1 - e) * F * .9;
+    W.el.style.opacity = e;
+    W.el.style.filter = e < 1 ? `blur(${(1 - e) * 4}px)` : '';
+    W.el.style.transform = `translate(${-W.w * F / 2 + sway}px,${yPx - F * .6}px)`;
+    let alive = 0;
+    W.chars.forEach((c, k) => {
+      if (c.hit) return;
+      alive++;
+      const x = c.ox * F + sway, top = yPx - F * .42;
+      const d = top - wallY(x);
+      if (d <= F * .3) { dissolve(c, W, x, yPx); return; }
+      c.el.style.opacity = (.3 + .7 * Math.min(1, (d - F * .3) / (F * 1.6))).toFixed(3);
+    });
+    if (!alive) W.done += dt;
+  }
+  words = words.filter(W => { if (W.done > 2) { W.el.remove(); return false; } return true; });
+}
+
+let last = 0;
+function frame(ts) {
+  const dt = Math.min(.05, (ts - (last || ts)) / 1000); last = ts;
+  if (running) step(dt);
+  requestAnimationFrame(frame);
+}
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space') return;
+  e.preventDefault(); running = !running;
+  bowl.getAnimations({ subtree: true }).forEach(a => running ? a.play() : a.pause());
+});
+
+function still() {
+  const stanzas = POEM.split(/\n\s*\n/);
+  const box = document.createElement('div'); box.className = 'still'; box.setAttribute('aria-hidden', 'true'); bowl.appendChild(box);
+  let i = 0;
+  const show = () => {
+    box.style.opacity = 0;
+    setTimeout(() => {
+      box.innerHTML = stanzas[i].split('\n').map(l => `<div class="${l.startsWith('(') ? 'aside' : ''}">${esc(l)}</div>`).join('');
+      box.style.opacity = 1; i = (i + 1) % stanzas.length;
+    }, 1400);
+  };
+  show(); setInterval(() => { if (running) show(); }, 7000);
+}
+
+if (!reduced) document.addEventListener('pointerdown', e => {
+  const r = bowl.getBoundingClientRect(), tx = e.clientX - r.left - R, ty = e.clientY - r.top - R;
+  shake = Math.min(1.3, shake + .8);
+  for (const W of words) {            // the tremor reaches nearer words first
+    const d = Math.hypot(W.xem * F - tx, W.y * R - ty) / R;
+    W.kicks.push(clock + Math.min(.35, d * .12));
+  }
+});
+if (reduced) still();
+else Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]).then(() => { geo(); requestAnimationFrame(frame); });
+}
+</script>
+</body>
+</html>
