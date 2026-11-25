@@ -37,6 +37,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:20;ba
 .still{position:absolute;inset:0;display:grid;place-items:center;text-align:center;transition:opacity 1.4s;line-height:2}
 .still .aside{font-style:italic;opacity:.65}
 
+.sig{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));margin:0;text-align:center;font-size:var(--F,16px);font-weight:300;line-height:1.2;letter-spacing:.01em;color:rgba(18,18,18,.3);text-shadow:0 0 .6px rgba(18,18,18,.25);pointer-events:none}
 @media (max-width:600px){:root{--D:min(76vw,60svh)}}
 </style>
 </head>
@@ -69,6 +70,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:20;ba
     </filter>
   </svg>
 </main>
+<p class="sig">Yifei</p>
 
 <script>
 {
@@ -118,7 +120,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 let R = 240, F = 16;
-const geo = () => { R = bowl.clientWidth / 2; F = Math.max(13, R * 0.074); bowl.style.fontSize = F + 'px'; };
+const geo = () => { R = bowl.clientWidth / 2; F = Math.max(13, R * 0.074); bowl.style.fontSize = F + 'px'; document.documentElement.style.setProperty('--F', F + 'px'); };
 geo();
 const ro = new ResizeObserver(geo); ro.observe(bowl);
 const wallY = x => { const q = R * R - x * x; return q > 0 ? -Math.sqrt(q) : 0; };
